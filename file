@@ -1,0 +1,406 @@
+1.
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import matplotlib.pyplot as plt
+
+(x_train,y_train),(x_test,y_test)=keras.datasets.mnist.load_data()
+
+x_train=x_train.reshape(-1,784)/255.0
+x_test=x_test.reshape(-1,784)/255.0
+
+y_train=keras.utils.to_categorical(y_train,10)
+y_test=keras.utils.to_categorical(y_test,10)
+
+model=keras.Sequential([
+keras.Input(shape=(784,)),
+layers.Dense(128,activation="relu"),
+layers.Dense(10,activation="softmax")])
+
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy'])
+
+model.fit(x_train,y_train,epochs=3,batch_size=32)
+
+loss,acc=model.evaluate(x_test,y_test)
+
+print("loss=",loss)
+print(" accuracy=",acc)
+
+pred=model.predict(x_test)
+
+plt.imshow(x_test[0].reshape(28,28),cmap='gray')
+plt.title("predivcted:"+str(np.argmax(pred[0])))
+plt.show()
+
+2.
+import numpy as np
+
+x=np.array([[0,0],[0,1],[1,0],[1,1]])
+y=np.array([[0],[1],[1],[0]])
+w1=np.random.randn(2,2)
+w2=np.random.randn(2,1)
+b1=np.random.randn(1,2)
+b2=np.random.randn(1,1)
+lr=0.1
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
+def sigmoid_der(x):
+    return x*(1-x)
+    
+for epoch in range(100000):
+    hidden_lay=sigmoid(np.dot(x,w1)+b1)
+    output_lay=sigmoid(np.dot(hidden_lay,w2)+b2)
+    error=y-output_lay
+    d_output=error*sigmoid_der(output_lay)
+    d_hidden=d_output.dot(w2.T)*sigmoid_der(hidden_lay)
+    w2=w2+hidden_lay.T.dot(d_output)*lr
+    w1=w1+x.T.dot(d_hidden)*lr
+    b2=b2+np.sum(d_output,axis=0)*lr
+    b1=b1+np.sum(d_hidden,axis=0)*lr
+print(output_lay)
+
+3.
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import matplotlib.pyplot as plt
+
+(x_train,y_train),(x_test,y_test)=keras.datasets.mnist.load_data()
+
+x_train=x_train.reshape(-1,28,28,1)/255.0
+x_test=x_test.reshape(-1,28,28,1)/255.0
+
+
+model=keras.Sequential([
+    layers.Conv2D(32,(3*3),activation='relu',input_shape=(28,28,1)),
+    layers.MaxPooling2D((2,2)),
+    layers.Conv2D(64,(3*3),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')])
+    
+
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy'])
+
+
+model.fit(x_train,y_train,epochs=3,validation_data=(x_test,y_test))
+
+loss,acc=model.evaluate(x_test,y_test)
+print("loss=",loss)
+print("acuuracy=",acc)
+
+pred=model.predict(x_test)
+
+plt.imshow(x_test[0].reshape(28,28),cmap='gray')
+plt.title("actyual"+str(y_test[0])+
+"predicted"+str(np.argmax(pred[0])))
+plt.show()
+
+4.
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import numpy as np
+import matplotlib.pyplot as  plt
+
+
+(x_train,y_train),(x_test,y_test)=keras.datasets.mnist.load_data()
+
+
+
+x_train=x_train.reshape(-1,28,28,1)
+x_test=x_test.reshape(-1,28,28,1)
+
+histories=[]
+model_names=[]
+def train_model(model,name,epoch):
+    model.compile(optimizer='adam',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
+    history=model.fit(x_train,y_train,epochs=epoch,validation_data=(x_test,y_test))
+    histories.append(history)
+    model_names.append(name)
+
+model1=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.Conv2D(32,(3,3),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Conv2D(64,(3,3),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+                        
+train_model(model1,"norm_conv",3)
+                        
+                        
+                        
+
+model2=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.SeparableConv2D(32,(3,3),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.SeparableConv2D(64,(3,3),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+                        
+train_model(model2,"seperableconv",3)
+                        
+                        
+                        
+
+model3=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.Conv2D(32,(5,5),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Conv2D(64,(5,5),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+                        
+train_model(model3,"5*5 kernel",3)
+                        
+                        
+                        
+
+model4=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.Conv2D(32,(5,5),activation='relu',dilation_rate=2),
+    layers.MaxPooling2D((2,2)),
+    layers.Conv2D(64,(5,5),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+train_model(model4," dilation",3)
+                        
+                        
+                        
+
+model5=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.Conv2D(32,(5,5),activation='relu',strides=2),
+    layers.MaxPooling2D((2,2)),
+    layers.Conv2D(64,(5,5),activation='relu'),
+    layers.MaxPooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+                        
+train_model(model5," strides",3)
+                        
+                        
+                        
+
+model6=keras.Sequential([
+    layers.Input(shape=(28,28,1)),
+    layers.Conv2D(32,(5,5),activation='relu',strides=2),
+    layers.AveragePooling2D((2,2)),
+    layers.Conv2D(64,(5,5),activation='relu'),
+    layers.AveragePooling2D((2,2)),
+    layers.Flatten(),
+    layers.Dense(64,activation='relu'),
+    layers.Dense(10,activation='softmax')
+                        ])
+                        
+train_model(model6," average pooling",3)
+                        
+                        
+                        
+
+plt.figure(figsize=(10,6))
+for i,history in enumerate(histories):
+    plt.plot(history.history['val_accuracy'],label=model_names[i])
+    plt.title("cnn variation")
+    plt.xlabel("epochs")
+    plt.ylabel("accuracy")
+    plt.legend()
+    plt.grid()
+plt.show()
+
+5.
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN,Dense
+
+
+word="hello"
+chars=sorted(list(set(word)))
+char_to_idx={ch:i for i,ch in enumerate(chars)}
+idx_tochar={i:ch for i,ch in enumerate(chars)}
+x_data=[char_to_idx[c] for c in word[:-1]]
+y_data=[char_to_idx[c] for c in word[1:]]
+
+X=np.reshape(x_data,(1,len(x_data),1))/float(len(chars))
+Y=tf.keras.utils.to_categorical(y_data,num_classes=len(chars))
+
+
+model=Sequential([
+    SimpleRNN(16,input_shape=(X.shape[1],1),activation='tanh'),
+Dense(len(chars),activation='softmax')])
+            
+
+
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy'
+)
+
+model.fit(X,np.array([Y[-1]]),epochs=50)
+
+pred=model.predict(X)
+
+pred_idx=np.argmax(pred)
+
+print("next letter is ",idx_tochar[pred_idx])
+
+6.
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense,LSTM,GRU
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+import urllib.request
+import matplotlib.pyplot as plt
+
+url='https://raw.githubusercontent.com/jbrownlee/Datasets/master/airline-passengers.csv'
+urllib.request.urlretrieve(url,"airline.csv")
+
+df=pd.read_csv("airline.csv")
+df.head()
+               
+
+data=df["Passengers"].values.astype(float)
+scaler=MinMaxScaler()
+data_scaled=scaler.fit_transform(data.reshape(-1,1))
+
+def create_sequence(data,seq_length=10):
+    X,Y=[],[]
+    for  i in range(len(data)-seq_length):
+        X.append(data[i:i+seq_length])
+        Y.append(data[i+seq_length])
+    return np.array(X),np.array(Y)
+    
+X,Y=create_sequence(data_scaled,seq_length=10)
+
+split=int(len(X)*0.8)
+X_train,X_test=X[:split],X[split:]
+Y_train,Y_test=Y[:split],Y[split:]
+X_train=X_train.reshape((X_train.shape[0],X_train.shape[1],1))
+X_test=X_test.reshape((X_test.shape[0],X_test.shape[1],1))
+
+lstm_model=Sequential([
+    LSTM(32,input_shape=(10,1)),
+    Dense(1)
+])
+lstm_model.compile(
+    optimizer='adam',
+    loss='mse'
+)
+lstm_history=lstm_model.fit(X_train,Y_train,epochs=50,batch_size=8)
+print("lstm_model training done ")
+
+gru_model=Sequential([
+    GRU(32,input_shape=(10,1)),
+    Dense(1)
+])
+gru_model.compile(
+    optimizer='adam',
+    loss='mse'
+)
+gru_history=gru_model.fit(X_train,Y_train,epochs=50,batch_size=8,verbose=0)
+print("gru_model training done ")
+
+lstm_pred=lstm_model.predict(X_test)
+gru_pred=gru_model.predict(X_test)
+
+lstm_actual=scaler.inverse_transform(lstm_pred)
+gru_actual=scaler.inverse_transform(gru_pred)
+real_actual=scaler.inverse_transform(Y_test.reshape(-1,1))
+
+print("Trainning_loss_plot")
+plt.figure(figsize=(10,4))
+plt.plot(lstm_history.history['loss'],
+         label='lstm_loss',
+         color='steelblue')
+plt.plot(gru_history.history['loss'],
+         label='gru_loss',
+         color='seagreen')
+plt.title("Training loss for gru and lstm")
+plt.xlabel('epochs')
+plt.ylabel('mse loss')
+plt.legend()
+plt.show()
+
+print("prediction plot")
+plt.figure(figsize=(10,4))
+plt.plot(
+    real_actual,
+    label='actual',
+    color='gray'
+    
+)
+plt.plot(
+    lstm_actual,
+    label='Lstm',
+    color='steelblue'
+    
+)
+plt.plot(
+    gru_actual,
+    label='Gru',
+    color='seagreen'
+    
+)
+plt.title("lstm vs gru vs actual")
+plt.xlabel("month")
+plt.ylabel("passenger")
+plt.legend()
+plt.show()
+
+print("\n Month|actual|lstm_pred|gru_pred")
+print("-"*45)
+for i in range(len(real_actual)):
+    print(
+        f"{i+1:>5}|"
+        f"{real_actual[i][0]:>6.0f}|"
+        f"{lstm_actual[i][0]:>9.0f}|"
+        f"{gru_actual[i][0]:>8.0f}|"
+
+
+    )
+
+lstm_mse=mean_squared_error(real_actual,lstm_actual)
+gru_mse=mean_squared_error(real_actual,gru_actual)
+
+print("\n model|mse|parameters")
+print(
+    f"{'lstm':>6}"
+    f"{lstm_mse:>10.0f}"
+    f"{lstm_model.count_params():>15.0f}"
+)
+print(
+    f"{'gru':>6}"
+    f"{gru_mse:>10.0f}"
+    f"{gru_model.count_params():>15.0f}"
+)
